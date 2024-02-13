@@ -1,83 +1,29 @@
+from tracemalloc import start
+from matplotlib import ticker
 import streamlit as st
+import yfinance as yf
 import pandas as pd
-import numpy as np
-import time
 
-latest_iteration = st.empty()
-bar = st.progress(0)
 
-for i in range(100):
-  # Update the progress bar with each iteration.
-  latest_iteration.text(f'Iteration {i+1}')
-  bar.progress(i + 1)
-  time.sleep(0.1)
-  
-x = st.slider('x')
-st.write(x, 'squared is', x * x)
+st.title('반도체 주식 데이터 Dashboard')
 
-st.text_input("Your name", key="name")
+# tickers =('TSLA','AAPL','MSFT','BTC-USD','ETH-USD','005930.KS')
 
-# You can access the value at any point with:
-st.session_state.name
+tickers = {'SK hynix': '000660.KS', 'Samsung Electronics': '005930.KS',
+           'NVIDIA Corporation': 'NVDA', 'QUALCOMM': 'QCOM'
+           }
 
-df = pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-})
+reversed_ticker = dict(map(reversed, tickers.items()))
 
-option = st.selectbox(
-    'Which number do you like best?',
-    df['first column'])
+dropdown = st.multiselect('select', tickers.keys())
 
-'You selected: ', option
+start = st.date_input('Start', value=pd.to_datetime('2019-01-01'))
 
-if st.checkbox('Show dataframe'):
-    chart_data = pd.DataFrame(
-        np.random.randn(20, 3),
-        columns=['a', 'b', 'c'])
+end = st.date_input('End', value=pd.to_datetime('today'))
 
-    chart_data
 
-left_column, right_column = st.columns(2)
-# You can use a column just like st.sidebar:
-left_column.button('Press me!')
-
-with right_column:
-    chosen = st.radio(
-        'Sorting hat',
-        ("Gryffindor", "Ravenclaw", "Hufflepuff", "Slytherin"))
-    st.write(f"You are in {chosen} house!")
-
-map_data = pd.DataFrame(
-    np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-    columns=['lat', 'lon'])
-
-st.map(map_data)
-
-df = pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-})
-
-st.write('This is a dataframe:')
-st.write(df)
-
-dataframe = np.random.randn(10, 20)
-st.dataframe(dataframe)
-
-dataframe = pd.DataFrame(
-    np.random.randn(10, 20),
-    columns=('col %d' % i for i in range(20)))
-
-st.dataframe(dataframe.style.highlight_max(axis=0))
-
-dataframe = pd.DataFrame(
-    np.random.randn(10, 20),
-    columns=('col %d' % i for i in range(20)))
-st.table(dataframe)
-
-chart_data = pd.DataFrame(
-    np.random.randn(20, 3),
-    columns=['a', 'b', 'c'])
-
-st.line_chart(chart_data)
+if len(dropdown) > 0:
+    for i in dropdown:
+        df = yf.download(tickers[i], start, end)['Adj Close']
+        st.title(reversed_ticker[tickers[i]])
+        st.line_chart(df)
